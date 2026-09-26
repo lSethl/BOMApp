@@ -48,30 +48,35 @@ namespace BOMProject.DataAccess.Repositories
                 return GetAllMaterials();
             }
 
-            searchText = searchText.Trim();
+            searchText = searchText.Trim().ToLower();
 
             return searchField switch
             {
                 "Comment" => _context.Materials
                     .Where(m => m.Comment != null &&
-                                m.Comment.Contains(searchText))
+                                m.Comment.ToLower().Contains(searchText))
                     .ToList(),
 
                 "Footprint" => _context.Materials
                     .Where(m => m.Footprint != null &&
-                                m.Footprint.Contains(searchText))
+                                m.Footprint.ToLower().Contains(searchText))
                     .ToList(),
 
                 "Value" => _context.Materials
                     .Where(m => m.Value != null &&
-                                m.Value.Contains(searchText))
+                                m.Value.ToLower().Contains(searchText))
                     .ToList(),
 
                 "All Fields" => _context.Materials
                     .Where(m =>
-                        (m.Comment != null && m.Comment.Contains(searchText)) ||
-                        (m.Footprint != null && m.Footprint.Contains(searchText)) ||
-                        (m.Value != null && m.Value.Contains(searchText)))
+                        (m.Comment != null &&
+                         m.Comment.ToLower().Contains(searchText)) ||
+
+                        (m.Footprint != null &&
+                         m.Footprint.ToLower().Contains(searchText)) ||
+
+                        (m.Value != null &&
+                         m.Value.ToLower().Contains(searchText)))
                     .ToList(),
 
                 _ => new List<Material>()

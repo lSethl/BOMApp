@@ -442,9 +442,9 @@
             flowLog.AutoScroll = true;
             flowLog.BackColor = Color.Transparent;
             flowLog.FlowDirection = FlowDirection.TopDown;
-            flowLog.Location = new Point(768, 89);
+            flowLog.Location = new Point(712, 89);
             flowLog.Name = "flowLog";
-            flowLog.Size = new Size(304, 262);
+            flowLog.Size = new Size(360, 262);
             flowLog.TabIndex = 13;
             flowLog.WrapContents = false;
             // 

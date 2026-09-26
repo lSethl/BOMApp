@@ -140,6 +140,7 @@ namespace bomApp
             {
                 openFileDialog.Filter = "Excel Files|*.xlsx;*.xls";
                 openFileDialog.Title = "Bom Excel Dosyasını Seçin";
+
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
                     try
@@ -147,11 +148,14 @@ namespace bomApp
                         var result = _excelImportService.ImportExcelData(openFileDialog.FileName);
 
                         ShowTemporaryLog(
+                            "Excel Import",
                             $"{result.ProcessedMaterialCount} kayıt işlendi.");
 
                         foreach (var warning in result.Warnings)
                         {
-                            ShowTemporaryLog(warning);
+                            ShowTemporaryLog(
+                                "Excel Uyarısı",
+                                warning);
                         }
 
                         MessageBox.Show(
@@ -163,7 +167,9 @@ namespace bomApp
                     catch (Exception ex)
                     {
                         ShowTemporaryLog(
-                            $"{DateTime.Now:dd.MM.yyyy HH:mm:ss} - HATA: {ex.Message}");
+                            "Excel Hatası",
+                            ex.Message);
+
                         MessageBox.Show(
                             $"Excel verileri işlenirken bir hata oluştu:\n{ex.Message}",
                             "Hata",
@@ -187,6 +193,7 @@ namespace bomApp
             dataGridView1.DataSource =
                 _materialService.SearchMaterials(searchText, searchField);
             HideGridColumns();
+            txtMaterial.Clear();
         }
 
         private void dataGridView1_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
@@ -208,6 +215,7 @@ namespace bomApp
 
             // Konum
             lblLocation.Text = _selectedMaterial.Location;
+            txtLocation.Text = _selectedMaterial.Location;
 
             // Ürün görseli
             pictureBox1.ImageLocation =
@@ -317,9 +325,10 @@ namespace bomApp
             dataGridView1.DataSource = _materialService.GetAllMaterials();
             HideGridColumns();
             _activityLogService.AddActivityLog(
-                $"Malzeme güncellendi. Konum: {_selectedMaterial.Location}");
+                $"{_selectedMaterial.Comment} ürünü güncellendi. Konum: {_selectedMaterial.Location}");
             ShowTemporaryLog(
-                $"Malzeme güncellendi. Konum: {_selectedMaterial.Location}");
+                "Malzeme Güncelleme",
+                $"{_selectedMaterial.Comment} ürünü güncellendi. Konum: {_selectedMaterial.Location}");
             MessageBox.Show("Malzeme başarıyla güncellendi.");
 
             ClearForm();
@@ -369,7 +378,7 @@ namespace bomApp
 
                 _activityLogService.AddActivityLog(logMessage);
 
-                ShowTemporaryLog(logMessage);
+                ShowTemporaryLog("Miktar Azaltma", logMessage);
                 MessageBox.Show("Ürün miktarı başarıyla azaltıldı.");
 
                 dataGridView1.DataSource = _materialService.GetAllMaterials();
@@ -410,7 +419,7 @@ namespace bomApp
 
             _activityLogService.AddActivityLog(logMessage);
 
-            ShowTemporaryLog(logMessage);
+            ShowTemporaryLog("Ürün Silme", logMessage);
 
             dataGridView1.DataSource = _materialService.GetAllMaterials();
             HideGridColumns();
@@ -420,14 +429,14 @@ namespace bomApp
             MessageBox.Show("Ürün başarıyla silindi.");
         }
 
-        private async void ShowTemporaryLog(string message)
+        private async void ShowTemporaryLog(string action, string detail)
         {
             if (_isLogHistoryOpen)
                 return;
 
             Label logLabel = new Label();
 
-            logLabel.Text = $"{DateTime.Now:HH:mm:ss}  •  {message}";
+            logLabel.Text = $"{DateTime.Now:HH:mm:ss}  •  {detail}";
             logLabel.AutoSize = false;
             logLabel.Width = flowLog.ClientSize.Width - 25;
             logLabel.Height = 45;
@@ -455,6 +464,9 @@ namespace bomApp
 
         private async void btnLogHistory_Click(object sender, EventArgs e)
         {
+            if (_isLogHistoryOpen)
+                return;
+
             _isLogHistoryOpen = true;
 
             var importLogs = _importHistoryService.GetAllImportHistories()
@@ -473,33 +485,95 @@ namespace bomApp
 
             var allLogs = importLogs
                 .Concat(activityLogs)
+                .Where(log => !string.IsNullOrWhiteSpace(log.Description))
                 .OrderByDescending(log => log.Date)
                 .ToList();
 
             flowLog.Controls.Clear();
+            flowLog.AutoScrollPosition = new Point(0, 0);
 
-            foreach (var log in allLogs
-                .Where(x => !string.IsNullOrWhiteSpace(x.Description)))
+            var groupedLogs = allLogs
+                .GroupBy(log => log.Date.Date)
+                .OrderByDescending(group => group.Key);
+
+            var culture = new System.Globalization.CultureInfo("tr-TR");
+
+            foreach (var dayGroup in groupedLogs)
             {
-                Label logLabel = new Label();
+                // =========================
+                // Datetime label for the day
+                // =========================
 
-                logLabel.Text =
-                    $"{log.Date:dd.MM.yyyy HH:mm:ss}  •  {log.Description}";
+                Label dateLabel = new Label();
 
-                logLabel.AutoSize = false;
-                logLabel.Width = flowLog.ClientSize.Width - 25;
-                logLabel.Height = 45;
+                dateLabel.Text =
+                    $"{dayGroup.Key:dd.MM.yyyy} " +
+                    culture.DateTimeFormat.GetDayName(dayGroup.Key.DayOfWeek);
 
-                logLabel.Font = new Font("Segoe UI", 9F);
-                logLabel.TextAlign = ContentAlignment.MiddleLeft;
+                dateLabel.AutoSize = false;
+                dateLabel.Width = flowLog.ClientSize.Width - 25;
+                dateLabel.Height = 35;
 
-                logLabel.BackColor = Color.FromArgb(240, 244, 248);
-                logLabel.ForeColor = Color.FromArgb(45, 55, 65);
+                dateLabel.Font =
+                    new Font("Segoe UI", 10F, FontStyle.Bold);
 
-                logLabel.Padding = new Padding(10);
-                logLabel.Margin = new Padding(3, 3, 3, 5);
+                dateLabel.TextAlign =
+                    ContentAlignment.MiddleLeft;
 
-                flowLog.Controls.Add(logLabel);
+                dateLabel.ForeColor =
+                    Color.FromArgb(35, 47, 62);
+
+                dateLabel.BackColor =
+                    Color.Transparent;
+
+                dateLabel.Padding =
+                    new Padding(8, 0, 0, 0);
+
+                dateLabel.Margin =
+                    new Padding(3, 10, 3, 3);
+
+                flowLog.Controls.Add(dateLabel);
+
+
+                // =========================
+                // A day log entries
+                // =========================
+
+                foreach (var log in dayGroup.OrderByDescending(x => x.Date))
+                {
+                    Label logLabel = new Label();
+
+                    logLabel.Text =
+                        $"{log.Date:HH:mm} — {log.Description}";
+
+                    logLabel.AutoSize = true;
+
+                    logLabel.MaximumSize =
+                        new Size(flowLog.ClientSize.Width - 45, 0);
+
+                    logLabel.MinimumSize =
+                        new Size(flowLog.ClientSize.Width - 25, 40);
+
+                    logLabel.Font =
+                        new Font("Segoe UI", 9F);
+
+                    logLabel.TextAlign =
+                        ContentAlignment.MiddleLeft;
+
+                    logLabel.BackColor =
+                        Color.FromArgb(240, 244, 248);
+
+                    logLabel.ForeColor =
+                        Color.FromArgb(45, 55, 65);
+
+                    logLabel.Padding =
+                        new Padding(10);
+
+                    logLabel.Margin =
+                        new Padding(3, 2, 3, 4);
+
+                    flowLog.Controls.Add(logLabel);
+                }
             }
 
             await Task.Delay(30000);
