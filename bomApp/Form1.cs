@@ -12,6 +12,8 @@ namespace bomApp
         private readonly IImportHistoryService _importHistoryService;
         private string? _selectedImagePath;
         private readonly IActivityLogService _activityLogService;
+        private bool _isLogHistoryOpen = false;
+
         public BOMProject(IExcelImportService excelImportService,
             IMaterialService materialService,
             IImportHistoryService importHistoryService,
@@ -270,7 +272,18 @@ namespace bomApp
                 return;
             }
 
-            _selectedMaterial.Quantity = int.Parse(txtQuantity.Text);
+            if (!int.TryParse(txtQuantity.Text, out int quantity) || quantity < 0)
+            {
+                MessageBox.Show(
+                    "Miktar geçerli bir sayı olmalıdır.",
+                    "Geçersiz Miktar",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+
+                return;
+            }
+
+            _selectedMaterial.Quantity = quantity;
             _selectedMaterial.Comment = txtComment.Text;
             _selectedMaterial.Footprint = txtFootprint.Text;
             _selectedMaterial.Value = txtValue.Text;
@@ -287,12 +300,17 @@ namespace bomApp
                 if (result != DialogResult.Yes)
                     return;
 
-                // Eski resmi sil
-                _materialService.DeleteMaterialImage(_selectedMaterial.ImagePath);
+                string? oldImagePath = _selectedMaterial.ImagePath;
 
-                // Yeni resmi kaydet
-                _selectedMaterial.ImagePath =
+                // Önce yeni resmi güvenli şekilde kaydet
+                string newImagePath =
                     _materialService.SaveMaterialImage(_selectedImagePath);
+
+                // Yeni resim başarıyla kaydedildiyse eski resmi sil
+                _materialService.DeleteMaterialImage(oldImagePath);
+
+                // Yeni yolu ürüne ata
+                _selectedMaterial.ImagePath = newImagePath;
             }
 
             _materialService.UpdateMaterial(_selectedMaterial);
@@ -404,6 +422,9 @@ namespace bomApp
 
         private async void ShowTemporaryLog(string message)
         {
+            if (_isLogHistoryOpen)
+                return;
+
             Label logLabel = new Label();
 
             logLabel.Text = $"{DateTime.Now:HH:mm:ss}  •  {message}";
@@ -434,6 +455,8 @@ namespace bomApp
 
         private async void btnLogHistory_Click(object sender, EventArgs e)
         {
+            _isLogHistoryOpen = true;
+
             var importLogs = _importHistoryService.GetAllImportHistories()
                 .Select(history => new
                 {
@@ -482,6 +505,8 @@ namespace bomApp
             await Task.Delay(30000);
 
             flowLog.Controls.Clear();
+
+            _isLogHistoryOpen = false;
         }
 
         private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)

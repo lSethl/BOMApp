@@ -57,7 +57,15 @@ namespace BOMProject.Business.Services
 
         public void DeleteZeroQuantityMaterials()
         {
-            _materialRepository.DeleteZeroQuantityMaterials();
+            var zeroQuantityMaterials = _materialRepository
+        .GetAllMaterials()
+        .Where(x => x.Quantity == 0)
+        .ToList();
+
+            foreach (var material in zeroQuantityMaterials)
+            {
+                DeleteMaterial(material.Id);
+            }
         }
 
         public List<Material> GetAllMaterials()
@@ -150,6 +158,16 @@ namespace BOMProject.Business.Services
                 Path.Combine(backupFolder, backupFileName);
 
             File.Copy(databasePath, backupPath, false);
+            var backupFiles = Directory
+                 .GetFiles(backupFolder, "BomApp_*.db")
+                 .OrderByDescending(File.GetCreationTime)
+                 .ToList();
+
+            foreach (var oldBackup in backupFiles.Skip(3))
+            {
+                File.Delete(oldBackup);
+            }
+
         }
     }
 }
