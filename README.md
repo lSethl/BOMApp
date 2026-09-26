@@ -194,6 +194,19 @@ Bu sürüm;
 
 ## 👨‍💻 Geliştirici
 
-**Mert Akbıyık**
+### Efe Akbıyık
+Elektrik-Elektronik Mühendisliği Öğrencisi
 
-.NET / C# Backend Development
+BOMApp'ın geliştiricisi.
+
+🔗 [LinkedIn] https://www.linkedin.com/in/efe-akbiyik-261610323/
+
+---
+
+## 🤝 Teknik Destek ve Yönlendirme
+
+### Mert Akbıyık
+
+Projenin geliştirme sürecinde destek sağlamıştır.
+
+🔗 [LinkedIn] https://www.linkedin.com/in/mert-akbiyik/
