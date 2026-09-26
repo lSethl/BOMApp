@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/Application/">
+    <Project Path="BOMProject.Business/BOMProject.Business.csproj" Id="a570f958-9294-49ef-8594-62e50d35f40d" />
+  </Folder>
+  <Folder Name="/Core/">
+    <Project Path="BOMProject.Entities/BOMProject.Entities.csproj" Id="dc1cec05-f5b2-40fc-8341-5160e78cd0b2" />
+  </Folder>
+  <Folder Name="/Infrastructure/">
+    <Project Path="BOMProject.DataAccess/BOMProject.DataAccess.csproj" Id="13cb6f55-5f89-4eff-8554-ed6504f1da9d" />
+  </Folder>
+  <Folder Name="/Presentation/">
+    <Project Path="bomApp/bomApp.csproj" />
+  </Folder>
+</Solution>
